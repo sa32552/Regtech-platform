@@ -7,7 +7,7 @@ FROM node:18-alpine AS backend-builder
 WORKDIR /app/backend
 
 COPY backend/package*.json ./
-RUN npm ci
+RUN npm install
 
 COPY backend/tsconfig.json ./
 COPY backend/src ./src
@@ -20,7 +20,7 @@ FROM node:18-alpine AS frontend-builder
 WORKDIR /app/frontend
 
 COPY frontend/package*.json ./
-RUN npm ci
+RUN npm install
 
 COPY frontend/tsconfig.json ./
 COPY frontend/next.config.js ./
@@ -35,7 +35,7 @@ FROM node:18-alpine AS backend
 WORKDIR /app
 
 COPY backend/package*.json ./
-RUN npm ci --only=production
+RUN npm install --production
 
 COPY --from=backend-builder /app/dist ./dist
 
@@ -55,7 +55,7 @@ FROM node:18-alpine AS frontend
 WORKDIR /app
 
 COPY frontend/package*.json ./
-RUN npm ci --only=production
+RUN npm install --production
 
 COPY --from=frontend-builder /app/.next ./.next
 COPY --from=frontend-builder /app/public ./public

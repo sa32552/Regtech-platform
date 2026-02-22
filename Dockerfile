@@ -10,7 +10,6 @@ COPY backend/package*.json ./
 RUN npm ci
 
 COPY backend/tsconfig.json ./
-COPY backend/.npmrc ./
 COPY backend/src ./src
 
 RUN npm run build

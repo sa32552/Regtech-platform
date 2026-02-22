@@ -1,0 +1,172 @@
+{
+  "dashboard": {
+    "title": "RegTech System Health",
+    "tags": ["regtech", "system"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 0,
+    "refresh": "15s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "System Health Overview",
+        "type": "stat",
+        "gridPos": {"x": 0, "y": 0, "w": 24, "h": 8},
+        "targets": [
+          {
+            "expr": "up{job=~"regtech-.*"}",
+            "legendFormat": "{{service}}"
+          }
+        ],
+        "options": {
+          "colorMode": "background",
+          "graphMode": "none"
+        }
+      },
+      {
+        "id": 2,
+        "title": "Request Rate",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total[5m])) by (service)",
+            "legendFormat": "{{service}}"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "reqps",
+            "label": "Requests/sec"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Error Rate",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total{status=~"5.."}[5m])) by (service)",
+            "legendFormat": "{{service}}"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "short",
+            "label": "Errors/sec"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Response Time (P95)",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 16, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service))",
+            "legendFormat": "{{service}}"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "s",
+            "label": "Duration"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Database Connections",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 16, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "pg_stat_database_numbackends{datname="regtech_db"}",
+            "legendFormat": "Connections"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "short",
+            "label": "Connections"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Redis Memory Usage",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 24, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "redis_memory_used_bytes / redis_memory_max_bytes * 100",
+            "legendFormat": "Memory Usage %"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "percent",
+            "label": "Memory Usage"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Workflow Queue Size",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 24, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "bullmq_jobs_total{state="waiting"}",
+            "legendFormat": "{{queue}}"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "short",
+            "label": "Jobs"
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "AI Service Latency",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 32, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(ai_service_request_duration_seconds_bucket[5m])) by (le))",
+            "legendFormat": "P95"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "s",
+            "label": "Duration"
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "MinIO Storage Usage",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 32, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "(1 - minio_disk_storage_available_bytes / minio_disk_storage_total_bytes) * 100",
+            "legendFormat": "Storage Usage %"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "percent",
+            "label": "Storage Usage"
+          }
+        ]
+      }
+    ]
+  }
+}

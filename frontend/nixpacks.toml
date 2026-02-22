@@ -1,0 +1,15 @@
+[phases.build]
+cmds = ["npm run build"]
+
+[phases.start]
+cmd = "npm run start"
+
+[variables]
+NODE_ENV = "production"
+PORT = "3000"
+
+[static]
+# Expose root path for Railway
+[[static.headers]]
+for = "/"
+values = { Access-Control-Allow-Origin = "*" }

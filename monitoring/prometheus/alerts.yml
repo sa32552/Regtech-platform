@@ -1,0 +1,202 @@
+groups:
+  - name: regtech_alerts
+    interval: 30s
+    rules:
+      # Alertes Backend
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{status=~"5.."}[5m])) 
+            / 
+            sum(rate(http_requests_total[5m]))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          service: backend
+        annotations:
+          summary: "Taux d'erreur élevé sur le backend"
+          description: "Le taux d'erreur est de {{ $value | humanizePercentage }} sur les 5 dernières minutes"
+
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95, 
+            sum(rate(http_request_duration_seconds_bucket[5m])) by (le)
+          ) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: backend
+        annotations:
+          summary: "Latence élevée sur le backend"
+          description: "La latence P95 est de {{ $value | humanizeDuration }}"
+
+      # Alertes Base de données
+      - alert: DatabaseConnectionFailure
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: database
+        annotations:
+          summary: "Base de données inaccessible"
+          description: "La base de données PostgreSQL est inaccessible depuis 1 minute"
+
+      - alert: HighDatabaseConnections
+        expr: |
+          (
+            pg_stat_database_numbackends{datname="regtech_db"} 
+            / 
+            pg_settings_max_connections
+          ) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "Nombre élevé de connexions à la base de données"
+          description: "{{ $value | humanizePercentage }} des connexions sont utilisées"
+
+      # Alertes Redis
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: redis
+        annotations:
+          summary: "Redis inaccessible"
+          description: "Redis est inaccessible depuis 1 minute"
+
+      - alert: HighMemoryUsageRedis
+        expr: |
+          (
+            redis_memory_used_bytes 
+            / 
+            redis_memory_max_bytes
+          ) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Utilisation mémoire élevée sur Redis"
+          description: "{{ $value | humanizePercentage }} de la mémoire est utilisée"
+
+      # Alertes MinIO
+      - alert: MinIOOffline
+        expr: minio_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: storage
+        annotations:
+          summary: "MinIO inaccessible"
+          description: "MinIO est inaccessible depuis 1 minute"
+
+      - alert: MinIODiskSpaceLow
+        expr: |
+          (
+            minio_disk_storage_available_bytes 
+            / 
+            minio_disk_storage_total_bytes
+          ) < 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: storage
+        annotations:
+          summary: "Espace disque faible sur MinIO"
+          description: "Il reste moins de 10% d'espace disque"
+
+      # Alertes Service IA
+      - alert: AIServiceDown
+        expr: up{job="regtech-ai-service"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: ai
+        annotations:
+          summary: "Service IA inaccessible"
+          description: "Le service IA est inaccessible depuis 1 minute"
+
+      - alert: AIServiceHighLatency
+        expr: |
+          histogram_quantile(0.95, 
+            sum(rate(ai_service_request_duration_seconds_bucket[5m])) by (le)
+          ) > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: ai
+        annotations:
+          summary: "Latence élevée sur le service IA"
+          description: "La latence P95 est de {{ $value | humanizeDuration }}"
+
+      # Alertes Workflows
+      - alert: WorkflowQueueBacklog
+        expr: bullmq_jobs_total{state="waiting"} > 1000
+        for: 5m
+        labels:
+          severity: warning
+          service: workflows
+        annotations:
+          summary: "Backlog important dans les queues de workflows"
+          description: "{{ $value }} jobs en attente dans les queues"
+
+      - alert: WorkflowFailureRate
+        expr: |
+          (
+            sum(rate(bullmq_jobs_total{state="failed"}[5m])) 
+            / 
+            sum(rate(bullmq_jobs_total[5m]))
+          ) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: workflows
+        annotations:
+          summary: "Taux d'échec élevé dans les workflows"
+          description: "Le taux d'échec est de {{ $value | humanizePercentage }}"
+
+      # Alertes Système
+      - alert: HighCPUUsage
+        expr: |
+          (
+            100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+          ) > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "Utilisation CPU élevée"
+          description: "L'utilisation CPU est de {{ $value }}%"
+
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100
+          ) > 90
+        for: 5m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "Utilisation mémoire élevée"
+          description: "L'utilisation mémoire est de {{ $value }}%"
+
+      - alert: DiskSpaceLow
+        expr: |
+          (
+            (node_filesystem_avail_bytes{mountpoint="/"} 
+            / 
+            node_filesystem_size_bytes{mountpoint="/"}) * 100
+          ) < 10
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "Espace disque faible"
+          description: "Il reste moins de 10% d'espace disque sur /"

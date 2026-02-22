@@ -1,0 +1,182 @@
+version: '3.8'
+
+services:
+  # Base de données PostgreSQL
+  postgres:
+    image: postgres:14-alpine
+    container_name: regtech-postgres
+    environment:
+      POSTGRES_USER: regtech
+      POSTGRES_PASSWORD: regtech_password
+      POSTGRES_DB: regtech_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - regtech-network
+
+  # Redis pour la queue et le cache
+  redis:
+    image: redis:7-alpine
+    container_name: regtech-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - regtech-network
+
+  # MinIO pour le stockage de fichiers
+  minio:
+    image: minio/minio:latest
+    container_name: regtech-minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - regtech-network
+
+  # Backend NestJS
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: regtech-backend
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_USER: regtech
+      DATABASE_PASSWORD: regtech_password
+      DATABASE_NAME: regtech_db
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      JWT_SECRET: your_jwt_secret_key_here
+      AI_SERVICE_URL: http://ai-service:8000
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres
+      - redis
+      - minio
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - regtech-network
+    command: npm run start:dev
+
+  # Frontend Next.js
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: regtech-frontend
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:3001/api
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - regtech-network
+    command: npm run dev
+
+  # Service IA Python
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: regtech-ai-service
+    environment:
+      PYTHONUNBUFFERED: 1
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+      - minio
+    volumes:
+      - ./ai-service:/app
+      - ai_models:/app/models
+    networks:
+      - regtech-network
+    command: uvicorn main:app --reload --host 0.0.0.0 --port 8000
+
+  # Bull Board pour la gestion des queues
+  bull-board:
+    image: deadly0/bull-board
+    container_name: regtech-bull-board
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "3002:3000"
+    depends_on:
+      - redis
+    networks:
+      - regtech-network
+
+  # Prometheus pour le monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: regtech-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - regtech-network
+
+  # Grafana pour la visualisation
+  grafana:
+    image: grafana/grafana:latest
+    container_name: regtech-grafana
+    ports:
+      - "3003:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - regtech-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  ai_models:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  regtech-network:
+    driver: bridge

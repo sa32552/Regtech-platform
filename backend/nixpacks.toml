@@ -1,0 +1,15 @@
+[phases.build]
+cmds = ["npm run build"]
+
+[phases.start]
+cmd = "npm run start:prod"
+
+[variables]
+NODE_ENV = "production"
+PORT = "3001"
+
+[static]
+# Expose health endpoint for Railway
+[[static.headers]]
+for = "/health"
+values = { Access-Control-Allow-Origin = "*" }

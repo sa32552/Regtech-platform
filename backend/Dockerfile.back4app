@@ -4,10 +4,10 @@ FROM node:18-alpine AS builder
 WORKDIR /app
 
 # Copier les fichiers de package
-COPY package*.json ./
+COPY package.json package-lock.json* ./
 
 # Installer les dépendances
-RUN npm ci --only=production
+RUN npm ci
 
 # Copier le code source
 COPY . .
@@ -21,7 +21,7 @@ FROM node:18-alpine
 WORKDIR /app
 
 # Créer un utilisateur non-root
-RUN addgroup -g node -g && adduser -u 1000 -G node -g node
+RUN addgroup -g 1001 node && adduser -u 1001 -G node -s /bin/sh node
 
 # Copier les fichiers de l'étape builder
 COPY --from=builder --chown=node:node /app/dist ./dist

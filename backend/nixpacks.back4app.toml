@@ -18,3 +18,6 @@ NODE_ENV = "production"
 [deploy.env]
 NODE_ENV = "production"
 PORT = "3001"
+
+[build]
+exclude = [".npmrc", ".git", ".env*"]

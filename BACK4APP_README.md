@@ -70,7 +70,7 @@ git push -u origin main
 1. Dans votre application Back4App, cliquez sur "Server Settings" → "Cloud Code"
 2. Ajoutez une nouvelle configuration de déploiement pour le service IA
 3. Spécifiez le dossier "ai-service" comme racine
-4. Configurez les variables d'environnement en vous basant sur `ai-service/.env.example`
+4. Configurez les variables d'environnement en vous basant sur `ai-service/.env.back4app.example`
 5. Cliquez sur "Deploy"
 
 ### 7. Configurer la base de données
@@ -89,6 +89,51 @@ npm run migration:run
 ```bash
 npm run seed:admin
 ```
+
+### Nouvelles fonctionnalités
+
+Les modules suivants ont été ajoutés à la plateforme :
+
+#### Sanctions (Listes de sanctions)
+- Intégration avec les listes OFAC, UE et ONU
+- Vérification automatique des personnes et entreprises sanctionnées
+- Synchronisation automatique des listes de sanctions
+
+#### PEP (Personnes Politiquement Exposées)
+- Vérification sur les listes internationales, nationales et régionales
+- Calcul du niveau de risque basé sur la catégorie de PEP
+- Synchronisation automatique des listes de PEP
+
+#### Notifications
+- Notifications en temps réel via WebSockets
+- Types de notifications : AML, KYC, Documents, Workflows, Règles
+- Gestion des notifications persistantes
+
+#### Reporting
+- Génération de rapports PDF et Excel
+- Rapports KYC et AML personnalisables
+- Export de données filtrées
+
+### Variables d'environnement supplémentaires
+
+Les variables d'environnement suivantes ont été ajoutées :
+
+#### Backend (.env.back4app.example)
+- `OFAC_API_KEY` : Clé API pour OFAC
+- `OFAC_API_URL` : URL de l'API OFAC
+- `EU_SANCTIONS_API_URL` : URL de l'API des sanctions UE
+- `UN_SANCTIONS_API_URL` : URL de l'API des sanctions ONU
+- `PEP_INTERNATIONAL_API_URL` : URL de l'API PEP internationale
+- `PEP_NATIONAL_API_URL` : URL de l'API PEP nationale
+- `PEP_REGIONAL_API_URL` : URL de l'API PEP régionale
+- `NOTIFICATIONS_ENABLED` : Activation des notifications (true/false)
+
+#### Frontend (.env.back4app.local.example)
+- `NEXT_PUBLIC_WS_URL` : URL du WebSocket pour les notifications en temps réel
+
+#### Service IA (.env.back4app.example)
+- `OCR_LANGUAGE` : Langue pour l'OCR (fr, en, etc.)
+- `OCR_USE_GPU` : Utilisation du GPU pour l'OCR (true/false)
 
 ### 8. Configurer les connexions entre services
 

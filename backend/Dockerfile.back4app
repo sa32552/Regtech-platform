@@ -1,0 +1,42 @@
+# Étape 1: Build
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+# Copier les fichiers de package
+COPY package*.json ./
+
+# Installer les dépendances
+RUN npm ci --only=production
+
+# Copier le code source
+COPY . .
+
+# Build l'application
+RUN npm run build
+
+# Étape 2: Production
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Créer un utilisateur non-root
+RUN addgroup -g node -g && adduser -u 1000 -G node -g node
+
+# Copier les fichiers de l'étape builder
+COPY --from=builder --chown=node:node /app/dist ./dist
+COPY --from=builder --chown=node:node /app/node_modules ./node_modules
+COPY --from=builder --chown=node:node /app/package.json ./package.json
+
+# Variables d'environnement
+ENV NODE_ENV=production
+ENV PORT=3001
+
+# Exposer le port
+EXPOSE 3001
+
+# Utiliser l'utilisateur non-root
+USER node
+
+# Commande de démarrage
+CMD ["node", "dist/main.js"]

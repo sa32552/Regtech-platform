@@ -76,6 +76,15 @@ cp frontend/.env.example frontend/.env
 cp ai-service/.env.example ai-service/.env
 ```
 
+### Déploiement sur Back4App
+
+Pour déployer sur Back4App, consultez le guide détaillé dans `BACK4APP_README.md`.
+
+```bash
+# Préparer le déploiement
+prepare-back4app-deploy.bat
+```
+
 6. Initialiser la base de données
 ```bash
 cd backend

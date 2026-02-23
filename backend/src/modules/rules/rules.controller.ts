@@ -110,7 +110,7 @@ export class RulesController {
   @ApiOperation({ summary: 'Get rules by status' })
   @ApiResponse({ status: 200, description: 'List of rules with specified status' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status, 403, description: 'Forbidden - Admin or Compliance Officer role required' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin or Compliance Officer role required' })
   @ApiQuery({ name: 'status', enum: RuleStatus, required: true })
   getRulesByStatus(@Query('status') status: RuleStatus) {
     return this.rulesService.getRulesByStatus(status);

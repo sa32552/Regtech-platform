@@ -8,6 +8,7 @@ import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 import * as Minio from 'minio';
 import { v4 as uuidv4 } from 'uuid';
+import type { Multer } from 'multer';
 
 @Injectable()
 export class DocumentsService {
@@ -47,7 +48,7 @@ export class DocumentsService {
 
   async create(
     clientId: string,
-    file: Express.Multer.File,
+    file: Multer.File,
     createDocumentDto: CreateDocumentDto,
     uploadedById: string,
   ): Promise<KycDocument> {
@@ -116,11 +117,11 @@ export class DocumentsService {
     return document;
   }
 
-  async getDocumentStream(id: string): Promise<NodeJS.ReadableStream> {
+  async getDocumentStream(id: string): Promise<import('stream').Readable> {
     const document = await this.findOne(id);
 
     try {
-      return await this.minioClient.getObject(document.minioBucket, document.minioObjectName);
+      return await this.minioClient.getObject(document.minioBucket, document.minioObjectName) as import('stream').Readable;
     } catch (error) {
       throw new BadRequestException('Failed to retrieve file from storage');
     }

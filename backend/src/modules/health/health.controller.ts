@@ -66,20 +66,13 @@ export class HealthController {
   }
 
   @Public()
-  @Get('metrics')
-  @ApiOperation({ summary: 'Get Prometheus metrics' })
-  @ApiResponse({ status: 200, description: 'Prometheus metrics' })
-  async getMetrics() {
-    return this.healthService.getMetrics();
-  }
-
   @UseGuards(JwtAuthGuard)
   @Get('history')
   @ApiOperation({ summary: 'Get health check history' })
   @ApiResponse({ status: 200, description: 'Health check history' })
   @ApiBearerAuth()
   async getHistory() {
-    return this.healthService.getHealthCheckHistory();
+    return this.healthService.getHealthHistory();
   }
 
   @UseGuards(JwtAuthGuard)

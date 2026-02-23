@@ -117,7 +117,7 @@ export class ClientsController {
   @Roles(UserRole.ADMIN, UserRole.COMPLIANCE_OFFICER)
   @ApiOperation({ summary: 'Update client status' })
   @ApiResponse({ status: 200, description: 'Client status successfully updated' })
-  @ApiResponse({ status, 404, description: 'Client not found' })
+  @ApiResponse({ status: 404, description: 'Client not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Admin or Compliance Officer role required' })
   updateStatus(@Param('id') id: string, @Body('status') status: ClientStatus) {
